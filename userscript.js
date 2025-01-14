@@ -7,7 +7,7 @@
 // @match        *://*.siambit.me/*
 // @match        *://*.bearbit.co/*
 // @match        *://*.bearbit.*/*
-// @icon         https://raw.githubusercontent.com/nuttaponr/say-thanks/icons/48x48.png
+// @icon         https://raw.githubusercontent.com/nuttaponr/say-thanks/refs/heads/main/icons/48x48.png
 // @grant        none
 // ==/UserScript==
 
