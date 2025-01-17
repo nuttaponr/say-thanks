@@ -4,7 +4,7 @@
 // @version      1.0.2
 // @description  Auto "say thanks" Bearbit
 // @author       You
-// @match        *://*.bearbit.co/*
+// @match        *://*.bearbit.org/*
 // @icon         https://raw.githubusercontent.com/nuttaponr/say-thanks/refs/heads/main/icons/48x48.png
 // @grant        none
 // ==/UserScript==
