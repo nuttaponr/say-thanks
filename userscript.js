@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bearbit+
-// @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @namespace    Violentmonkey Scripts
+// @version      1.0.2
 // @description  Auto "say thanks" Bearbit
 // @author       You
 // @match        *://*.bearbit.co/*
