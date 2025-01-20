@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bearbit+
 // @namespace    Violentmonkey Scripts
-// @version      1.0.2
+// @version      1.0.3
 // @description  Auto "say thanks" Bearbit
 // @author       You
 // @match        *://*.bearbit.org/*
@@ -9,7 +9,7 @@
 // @grant        none
 // ==/UserScript==
 
-(function () {
+(function() {
     'use strict';
 
     // Get the base URL of the current website
@@ -44,107 +44,92 @@
         }
     };
 
-    // Trigger the request if an item ID is present in the URL
     if (itemId) {
         sendThanksRequest(itemId);
     }
 
-    function cacheImage(url) {
-        const cachedImage = GM_getValue(url);
-
-        if (cachedImage) {
-            console.log(`Image is already cached: ${url}`);
-            return cachedImage;
-        }
-
-        console.log(`Caching image: ${url}`);
-
-        GM_xmlhttpRequest({
-            method: 'GET',
-            url: url,
-            responseType: 'blob',
-            onload: function (response) {
-                const reader = new FileReader();
-                reader.onload = function () {
-                    const base64data = reader.result;
-                    GM_setValue(url, base64data);
-                    console.log(`Cached image: ${url}`);
-                };
-                reader.readAsDataURL(response.response);
-            },
-            onerror: function (err) {
-                console.error(`Failed to cache image: ${url}`, err);
-            }
-        });
-    }
-
-    function cacheAllImages() {
-        const images = document.querySelectorAll('img');
-        images.forEach(img => {
-            const imgUrl = img.src;
-            const cachedData = cacheImage(imgUrl);
-            if (cachedData) {
-                img.src = cachedData;
-            }
-        });
-    }
-
-    // Run when the page content is loaded
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('Page content loaded. Caching images...');
-        cacheAllImages();
-    });
-
-    const observer = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-            if (mutation.type === 'childList') {
-                console.log('New content detected. Caching new images...');
-                cacheAllImages();
-            }
-        });
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-
     const xpath = "/html/body/table[2]/tbody/tr[3]/td/table/tbody/tr";
     const result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+    const rowsToRemove = [];
 
     for (let i = 0; i < result.snapshotLength; i++) {
         const row = result.snapshotItem(i);
 
         const cells = row.querySelectorAll('td');
-        if (cells.length < 3) {
+        if (cells.length <= 3) {
             return;
         }
+
+        const img = cells[0].querySelector('a > img');
+        if (img && img.src.includes("pic/categories/cat-man.gif")) {
+            rowsToRemove.push(row);
+        }
+
+        const secondTd = cells[1];
+        const secondLink = secondTd.querySelectorAll('a')[1];
+        const hrefUrl = secondLink.href;
 
         const newTd = document.createElement('td');
         newTd.setAttribute('width', '50');
         newTd.setAttribute('align', 'center');
-
-        let secondLink = null;
-        if (cells.length > 1) {
-            const secondTd = cells[1]; // Second <td> element
-            secondLink = secondTd.querySelectorAll('a')[1]; // Second <a> tag inside the second <td>
-            newTd.style.backgroundColor = window.getComputedStyle(secondTd).backgroundColor;;
-        }
-
+        newTd.className = "colhead"
+        newTd.style.backgroundColor = window.getComputedStyle(secondTd).backgroundColor;
         if (i === 0) {
             newTd.textContent = 'Preview';
         } else if (secondLink) {
-            newTd.className = "colhead"
             const img = document.createElement('img');
-            img.setAttribute('src', secondLink.href); // Use the href as the image URL
+            img.setAttribute('src', hrefUrl); // Use the href as the image URL
             img.setAttribute('alt', 'Image Preview');
             img.setAttribute('style', 'max-width: 100%; height: auto;'); // Optionally style the image
+            // Create a tooltip container for the balloon
+            const tooltip = document.createElement('div');
+            tooltip.setAttribute('style', `
+                    position: absolute;
+                    display: none;
+                    border: 1px solid #ccc;
+                    background: #fff;
+                    z-index: 1000;
+                    padding: 5px;
+                    max-width: 40%;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            `);
+
+            document.body.appendChild(tooltip);
+
+            // Set up the mouseover and mouseout events
+            img.addEventListener('mouseover', (event) => {
+                const originalImg = document.createElement('img');
+                //originalImg.setAttribute('src', secondLink.href); // Use the href for the full-size image
+                originalImg.setAttribute('srcset', `${secondLink.href} 0.5x`);
+                originalImg.setAttribute('style', `
+                max-width: 100%;  /* Display the image at 30% of its original size */
+                height: auto;
+                `);
+
+                tooltip.appendChild(originalImg);
+                // Position the tooltip
+                tooltip.style.display = 'block';
+                tooltip.style.left = `${event.pageX + 10}px`;
+                tooltip.style.top = `${event.pageY + 10}px`;
+                tooltip
+            });
+
+            img.addEventListener('mousemove', (event) => {
+                // Update the position of the tooltip
+                tooltip.style.left = `${event.pageX + 10}px`;
+                //tooltip.style.left = `${window.innerWidth/2}px`;
+                tooltip.style.top = `${event.pageY + 10}px`;
+                //tooltip.style.top = `${window.innerHeight/2}px`;
+                //coordinates.textContent = `Screen: Width = ${window.innerWidth}, Height = ${window.innerHeight}`;
+            });
+
+            img.addEventListener('mouseout', () => {
+                tooltip.style.display = 'none';
+            });
             newTd.appendChild(img);
         }
-
-        // Insert the new <td> at index 2 (third column)
-        if (cells.length > 2) {
-            row.insertBefore(newTd, cells[2]);
-        } else {
-            // If there are less than 3 cells, append the new <td> at the end
-            row.appendChild(newTd);
-        }
+        row.insertBefore(newTd, cells[1]);
     }
+
+    rowsToRemove.forEach(row => row.parentNode.removeChild(row));
 })();
