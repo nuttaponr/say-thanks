@@ -67,7 +67,6 @@
 
         const secondTd = cells[1];
         const secondLink = secondTd.querySelectorAll('a')[1];
-        const hrefUrl = secondLink.href;
 
         const newTd = document.createElement('td');
         newTd.setAttribute('width', '50');
@@ -77,6 +76,7 @@
         if (i === 0) {
             newTd.textContent = 'Preview';
         } else if (secondLink) {
+            const hrefUrl = secondLink.href;
             const img = document.createElement('img');
             img.setAttribute('src', hrefUrl); // Use the href as the image URL
             img.setAttribute('alt', 'Image Preview');
