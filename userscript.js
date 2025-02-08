@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bearbit+
 // @namespace    Violentmonkey Scripts
-// @version      1.0.4
+// @version      1.0.5
 // @description  Auto "say thanks" Bearbit
 // @author       You
 // @match        *://*.bearbit.org/*
@@ -95,11 +95,10 @@
             `);
 
             document.body.appendChild(tooltip);
-
+            const originalImg = document.createElement('img');
+           
             // Set up the mouseover and mouseout events
-            img.addEventListener('mouseover', (event) => {
-                const originalImg = document.createElement('img');
-                //originalImg.setAttribute('src', secondLink.href); // Use the href for the full-size image
+            img.addEventListener('mouseover', (event) => {                
                 originalImg.setAttribute('srcset', `${secondLink.href} 0.5x`);
                 originalImg.setAttribute('style', `
                 max-width: 100%;  /* Display the image at 30% of its original size */
@@ -111,7 +110,6 @@
                 tooltip.style.display = 'block';
                 tooltip.style.left = `${event.pageX + 10}px`;
                 tooltip.style.top = `${event.pageY + 10}px`;
-                tooltip
             });
 
             img.addEventListener('mousemove', (event) => {
