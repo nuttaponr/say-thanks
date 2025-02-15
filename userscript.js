@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bearbit+
 // @namespace    Violentmonkey Scripts
-// @version      1.0.5
+// @version      1.0.6
 // @description  Auto "say thanks" Bearbit
 // @author       You
 // @match        *://*.bearbit.org/*
@@ -12,122 +12,110 @@
 (function() {
     'use strict';
 
-    // Get the base URL of the current website
-    const baseUrl = window.location.origin;
 
-    // Construct API and details URLs
+    const baseUrl = window.location.origin;
     const apiUrl = `${baseUrl}/ajax.php`;
     const detailsUrl = `${baseUrl}/details.php`;
-
-    // Extract query parameters from the current URL
     const queryParams = new URLSearchParams(window.location.search);
     const itemId = queryParams.get("id");
 
-    // Function to send a "say thanks" request
-    const sendThanksRequest = async (id) => {
-        try {
-            const params = new URLSearchParams({
-                action: "say_thanks",
-                id: id,
-            });
 
-            const response = await fetch(`${apiUrl}?${params.toString()}`);
+    function sendThanksRequest(id) {
+        if (!id) return;
 
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
+        const params = new URLSearchParams({ action: "say_thanks", id: id });
+        fetch(`${apiUrl}?${params.toString()}`)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                return response.text();
+            })
+            .then(data => console.log("Response:", data))
+            .catch(error => console.error("Error sending thanks request:", error));
+    }
+
+    function updateTooltipPosition(event, tooltip, rectTop) {
+        const scrollTop = Math.max(document.scrollingElement.scrollTop, rectTop + 10);
+        tooltip.style.left = `${event.pageX + 10}px`;
+        tooltip.style.top = `${scrollTop}px`;
+    }
+
+    function createTooltip(imageUrl) {
+        const tooltip = document.createElement('div');
+        tooltip.style = `
+            position: absolute;
+            display: none;
+            border: 1px solid #ccc;
+            background: #fff;
+            z-index: 1000;
+            padding: 5px;
+            max-width: 40%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);`;
+
+        const img = document.createElement('img');
+        img.srcset = `${imageUrl} 0.5x`;
+        img.style = "max-width: 100%; height: auto;";
+        tooltip.appendChild(img);
+
+        document.body.appendChild(tooltip);
+        return tooltip;
+    }
+
+    function addPreviewColumn() {
+        const xpath = "/html/body/table[2]/tbody/tr[3]/td/table/tbody/tr";
+        const result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+        const rowsToRemove = [];
+        let rectTop = 0;
+        const tables = document.querySelectorAll('body > table.mainouter > tbody > tr > td.outer > table');
+        if (tables.length >= 1) {
+            rectTop = tables[1]?.getBoundingClientRect().top || 0;
+        }
+
+        for (let i = 0; i < result.snapshotLength; i++) {
+            const row = result.snapshotItem(i);
+            const cells = row.querySelectorAll('td');
+            if (cells.length <= 3) continue;
+
+            const img = cells[0].querySelector('a > img');
+            if (img && img.src.includes("pic/categories/cat-man.gif")) {
+                rowsToRemove.push(row);
+                continue;
             }
 
-            const responseData = await response.text();
-            console.log("Response:", responseData);
-        } catch (error) {
-            console.error("Error sending thanks request:", error);
+            const secondTd = cells[1];
+            const secondLink = secondTd.querySelectorAll('a')[1];
+            const newTd = document.createElement('td');
+            newTd.width = '50';
+            newTd.align = 'center';
+            newTd.className = "colhead";
+            newTd.style.backgroundColor = window.getComputedStyle(secondTd).backgroundColor;
+
+            if (i === 0) {
+                newTd.textContent = 'Preview';
+            } else if (secondLink) {
+                const img = document.createElement('img');
+                img.src = secondLink.href;
+                img.alt = 'Image Preview';
+                img.style = 'max-width: 100%; height: auto;';
+
+                const tooltip = createTooltip(secondLink.href);
+                img.addEventListener('mouseover', event => {
+                    tooltip.style.display = 'block';
+                    updateTooltipPosition(event, tooltip, rectTop);
+                });
+                img.addEventListener('mousemove', event => updateTooltipPosition(event, tooltip, rectTop));
+                img.addEventListener('mouseout', () => tooltip.style.display = 'none');
+
+                newTd.appendChild(img);
+            }
+
+            row.insertBefore(newTd, cells[1]);
         }
-    };
+        rowsToRemove.forEach(row => row.parentNode.removeChild(row));
+    }
 
     if (itemId) {
         sendThanksRequest(itemId);
     }
 
-    const xpath = "/html/body/table[2]/tbody/tr[3]/td/table/tbody/tr";
-    const result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-    const rowsToRemove = [];
-
-    for (let i = 0; i < result.snapshotLength; i++) {
-        const row = result.snapshotItem(i);
-
-        const cells = row.querySelectorAll('td');
-        if (cells.length <= 3) {
-            return;
-        }
-
-        const img = cells[0].querySelector('a > img');
-        if (img && img.src.includes("pic/categories/cat-man.gif")) {
-            rowsToRemove.push(row);
-        }
-
-        const secondTd = cells[1];
-        const secondLink = secondTd.querySelectorAll('a')[1];
-
-        const newTd = document.createElement('td');
-        newTd.setAttribute('width', '50');
-        newTd.setAttribute('align', 'center');
-        newTd.className = "colhead"
-        newTd.style.backgroundColor = window.getComputedStyle(secondTd).backgroundColor;
-        if (i === 0) {
-            newTd.textContent = 'Preview';
-        } else if (secondLink) {
-            const hrefUrl = secondLink.href;
-            const img = document.createElement('img');
-            img.setAttribute('src', hrefUrl); // Use the href as the image URL
-            img.setAttribute('alt', 'Image Preview');
-            img.setAttribute('style', 'max-width: 100%; height: auto;'); // Optionally style the image
-            // Create a tooltip container for the balloon
-            const tooltip = document.createElement('div');
-            tooltip.setAttribute('style', `
-                    position: absolute;
-                    display: none;
-                    border: 1px solid #ccc;
-                    background: #fff;
-                    z-index: 1000;
-                    padding: 5px;
-                    max-width: 40%;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            `);
-
-            document.body.appendChild(tooltip);
-            const originalImg = document.createElement('img');
-           
-            // Set up the mouseover and mouseout events
-            img.addEventListener('mouseover', (event) => {                
-                originalImg.setAttribute('srcset', `${secondLink.href} 0.5x`);
-                originalImg.setAttribute('style', `
-                max-width: 100%;  /* Display the image at 30% of its original size */
-                height: auto;
-                `);
-
-                tooltip.appendChild(originalImg);
-                // Position the tooltip
-                tooltip.style.display = 'block';
-                tooltip.style.left = `${event.pageX + 10}px`;
-                tooltip.style.top = `${event.pageY + 10}px`;
-            });
-
-            img.addEventListener('mousemove', (event) => {
-                // Update the position of the tooltip
-                tooltip.style.left = `${event.pageX + 10}px`;
-                //tooltip.style.left = `${window.innerWidth/2}px`;
-                tooltip.style.top = `${event.pageY + 10}px`;
-                //tooltip.style.top = `${window.innerHeight/2}px`;
-                //coordinates.textContent = `Screen: Width = ${window.innerWidth}, Height = ${window.innerHeight}`;
-            });
-
-            img.addEventListener('mouseout', () => {
-                tooltip.style.display = 'none';
-            });
-            newTd.appendChild(img);
-        }
-        row.insertBefore(newTd, cells[1]);
-    }
-
-    rowsToRemove.forEach(row => row.parentNode.removeChild(row));
+    addPreviewColumn();
 })();
