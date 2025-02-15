@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bearbit+
 // @namespace    Violentmonkey Scripts
-// @version      1.0.6
+// @version      1.0.7
 // @description  Auto "say thanks" Bearbit
 // @author       You
 // @match        *://*.bearbit.org/*
@@ -112,10 +112,5 @@
         }
         rowsToRemove.forEach(row => row.parentNode.removeChild(row));
     }
-
-    if (itemId) {
-        sendThanksRequest(itemId);
-    }
-
-    addPreviewColumn();
+    itemId ? sendThanksRequest(itemId) : addPreviewColumn();
 })();
