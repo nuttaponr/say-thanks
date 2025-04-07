@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Bearbit+
 // @namespace    Violentmonkey Scripts
-// @version      1.0.7
+// @version      1.0.8
 // @description  Auto "say thanks" Bearbit
 // @author       You
 // @match        *://*.bearbit.org/*
+// @match        *://*.bearbit.cc/*
 // @icon         https://raw.githubusercontent.com/nuttaponr/say-thanks/refs/heads/main/icons/48x48.png
 // @grant        none
 // ==/UserScript==
