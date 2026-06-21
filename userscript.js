@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bearbit+
 // @namespace    Violentmonkey Scripts
-// @version      1.0.9
+// @version      1.0.10
 // @description  Auto "say thanks" Bearbit
 // @author       You
 // @match        *://*.bearbit.org/*
@@ -54,5 +54,17 @@
     }
 
     itemId ? sendThanksRequest(itemId) : kick();
-
+    
+    const xpath = '/html/body/table[2]/tbody/tr[1]/td/table/tbody/tr/td[4]';
+    const result = document.evaluate(
+        xpath,
+        document,
+        null,
+        XPathResult.FIRST_ORDERED_NODE_TYPE,
+        null
+    );
+    const node = result.singleNodeValue;
+    if (node) {
+        node.remove();
+    }
 })();
