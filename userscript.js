@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bearbit+
 // @namespace    Violentmonkey Scripts
-// @version      1.0.10
+// @version      1.0.11
 // @description  Auto "say thanks" Bearbit
 // @author       You
 // @match        *://*.bearbit.org/*
@@ -54,6 +54,11 @@
     }
 
     itemId ? sendThanksRequest(itemId) : kick();
+
+    const btn = document.querySelector('#bbDlBtn');
+    if (btn) {
+        btn.classList.add('bb-adgate-btn');
+    }
     
     const xpath = '/html/body/table[2]/tbody/tr[1]/td/table/tbody/tr/td[4]';
     const result = document.evaluate(
