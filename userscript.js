@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bearbit+
 // @namespace    Violentmonkey Scripts
-// @version      1.0.12
+// @version      1.0.1.
 // @description  Auto "say thanks" Bearbit
 // @author       You
 // @match        *://*.bearbit.org/*
@@ -13,73 +13,87 @@
 (function () {
     'use strict';
 
-
     const baseUrl = window.location.origin;
     const apiUrl = `${baseUrl}/ajax.php`;
-    const detailsUrl = `${baseUrl}/details.php`;
-    const queryParams = new URLSearchParams(window.location.search);
-    const itemId = queryParams.get("id");
 
+    const queryParams = new URLSearchParams(location.search);
+    const torrentId = queryParams.get("id");
 
-    function sendThanksRequest(id) {
-        if (!id) return;
+    function sendThanks(torrentId) {
+        if (!torrentId) return;
 
         const params = new URLSearchParams({
             action: "say_thanks",
-            id: id
+            id: torrentId
         });
-        fetch(`${apiUrl}?${params.toString()}`)
+
+        fetch(`${apiUrl}?${params}`)
             .then(response => {
-                if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
                 return response.text();
             })
-            .then(data => console.log("Response:", data))
-            .catch(error => console.error("Error sending thanks request:", error));
+            .then(data => console.log("Thanks sent:", data))
+            .catch(error => console.error("Failed to send thanks:", error));
     }
 
-    function kick() {
+    function removeMaleCategoryRows() {
         const xpath = "/html/body/table[2]/tbody/tr[3]/td/table/tbody/tr";
-        const result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+        const rows = document.evaluate(
+            xpath,
+            document,
+            null,
+            XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+            null
+        );
 
-        for (let i = 0; i < result.snapshotLength; i++) {
-            const row = result.snapshotItem(i);
-            const cells = row.querySelectorAll('td');
-            if (cells.length <= 3) continue;
+        for (let i = 0; i < rows.snapshotLength; i++) {
+            const row = rows.snapshotItem(i);
+            const img = row.querySelector("td:first-child a > img");
 
-            const img = cells[0].querySelector('a > img');
-            if (img && img.src.includes("pic/categories/cat-man.gif")) {
-                row.remove(); // 🚀 remove the whole row
+            if (img?.src.includes("pic/categories/cat-man.gif")) {
+                row.remove();
             }
         }
     }
 
-    itemId ? sendThanksRequest(itemId) : kick();
+    function autoClickDownloadButton() {
+        if (location.pathname !== "/downloadnew.php") return;
 
-    if (location.pathname === "/downloadnew.php") {
         const timer = setInterval(() => {
-            const btn = document.getElementById("bbDlBtn");
-
-            if (!btn) return;
+            const button = document.getElementById("bbDlBtn");
+            if (!button) return;
 
             clearInterval(timer);
 
             setTimeout(() => {
-                btn.click();
+                button.click();
             }, 5000);
 
-        }, 500); // Check twice per second
+        }, 500);
     }
 
-    const xpath = '/html/body/table[2]/tbody/tr[1]/td/table/tbody/tr/td[4]';
-    const result = document.evaluate(
-        xpath,
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
-    );
-    const node = result.singleNodeValue;
-    if (node) {
-        node.remove();
+    function removeRightSidebar() {
+        const xpath = "/html/body/table[2]/tbody/tr[1]/td/table/tbody/tr/td[4]";
+        const node = document.evaluate(
+            xpath,
+            document,
+            null,
+            XPathResult.FIRST_ORDERED_NODE_TYPE,
+            null
+        ).singleNodeValue;
+
+        node?.remove();
     }
+
+    if (torrentId) {
+        sendThanks(torrentId);
+    } else {
+        removeMaleCategoryRows();
+    }
+
+    autoClickDownloadButton();
+    removeRightSidebar();
+
 })();
