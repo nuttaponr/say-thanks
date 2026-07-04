@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bearbit+
 // @namespace    Violentmonkey Scripts
-// @version      1.0.11
+// @version      1.0.12
 // @description  Auto "say thanks" Bearbit
 // @author       You
 // @match        *://*.bearbit.org/*
@@ -10,7 +10,7 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
 
@@ -55,11 +55,21 @@
 
     itemId ? sendThanksRequest(itemId) : kick();
 
-    const btn = document.querySelector('#bbDlBtn');
-    if (btn) {
-        btn.classList.add('bb-adgate-btn');
+    if (location.pathname === "/downloadnew.php") {
+        const timer = setInterval(() => {
+            const btn = document.getElementById("bbDlBtn");
+
+            if (!btn) return;
+
+            clearInterval(timer);
+
+            setTimeout(() => {
+                btn.click();
+            }, 5000);
+
+        }, 500); // Check twice per second
     }
-    
+
     const xpath = '/html/body/table[2]/tbody/tr[1]/td/table/tbody/tr/td[4]';
     const result = document.evaluate(
         xpath,
