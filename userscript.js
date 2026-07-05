@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bearbit+
 // @namespace    Violentmonkey Scripts
-// @version      1.0.1.15
+// @version      1.0.1.16
 // @description  Auto "say thanks" Bearbit
 // @author       You
 // @match        *://*.bearbit.org/*
@@ -63,7 +63,11 @@
             const button = document.getElementById("bbDlBtn");
             if (!button) return;
             clearInterval(timer);
-             setTimeout(_=>(btn.click(),setTimeout(close,1e3)),5e3);
+            setTimeout(() => {
+                btn.click();
+                setTimeout(() => { window.close(); }, 1000);
+
+            }, 5000);
         }, 500);
     }
 
