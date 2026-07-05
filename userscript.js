@@ -51,7 +51,6 @@
         for (let i = 0; i < rows.snapshotLength; i++) {
             const row = rows.snapshotItem(i);
             const img = row.querySelector("td:first-child a > img");
-
             if (img?.src.includes("pic/categories/cat-man.gif")) {
                 row.remove();
             }
@@ -60,17 +59,11 @@
 
     function autoClickDownloadButton() {
         if (location.pathname !== "/downloadnew.php") return;
-
         const timer = setInterval(() => {
             const button = document.getElementById("bbDlBtn");
             if (!button) return;
-
             clearInterval(timer);
-
-            setTimeout(() => {
-                button.click();
-            }, 5000);
-
+             setTimeout(_=>(btn.click(),setTimeout(close,1e3)),5e3);
         }, 500);
     }
 
