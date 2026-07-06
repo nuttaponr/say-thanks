@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bearbit+
 // @namespace    Violentmonkey Scripts
-// @version      1.0.1.17
+// @version      1.0.1.18
 // @description  Auto "say thanks" Bearbit
 // @author       You
 // @match        *://*.bearbit.org/*
@@ -72,7 +72,7 @@
     }
 
     function removeRightSidebar() {
-        const xpath = "/html/body/table[2]/tbody/tr[1]/td/table/tbody/tr/td[4]";
+        const xpath = "/html/body/table[2]/tbody/tr[1]/td/table/tbody/tr/td[a[@href="viewbrsb.php?cat=908"]]";
         const node = document.evaluate(
             xpath,
             document,
